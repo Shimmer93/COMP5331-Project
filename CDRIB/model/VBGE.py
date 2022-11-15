@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import math
 from model.GCN import GCN
-from model.GCN import VGAE
+# from model.GCN import VGAE
 from torch.autograd import Variable
 from torch.distributions.kl import kl_divergence
 from torch.distributions import Normal
@@ -43,13 +43,13 @@ class VBGE(nn.Module):
                 item_ret = torch.cat((item_ret, learn_item), dim = -1)
         return user_ret, item_ret
 
-    def forward_user_share(self, ufea, UV_adj, VU_adj):
-        learn_user = ufea
-        for layer in self.encoder[:-1]:
-            learn_user = F.dropout(learn_user, self.dropout, training=self.training)
-            learn_user = layer.forward_user_share(learn_user, UV_adj, VU_adj)
-        mean, sigma = self.encoder[-1].forward_user_share(learn_user, UV_adj, VU_adj)
-        return mean, sigma
+    # def forward_user_share(self, ufea, UV_adj, VU_adj):
+    #     learn_user = ufea
+    #     for layer in self.encoder[:-1]:
+    #         learn_user = F.dropout(learn_user, self.dropout, training=self.training)
+    #         learn_user = layer.forward_user_share(learn_user, UV_adj, VU_adj)
+    #     mean, sigma = self.encoder[-1].forward_user_share(learn_user, UV_adj, VU_adj)
+    #     return mean, sigma
 
 
 class DGCNLayer(nn.Module):
@@ -101,26 +101,26 @@ class DGCNLayer(nn.Module):
         Item = self.item_union(Item)
         return F.relu(User), F.relu(Item)
 
-    def forward_user(self, ufea, vfea, UV_adj, VU_adj):
-        User_ho = self.gc1(ufea, VU_adj)
-        User_ho = self.gc3(User_ho, UV_adj)
-        User = torch.cat((User_ho, ufea), dim=1)
-        User = self.user_union(User)
-        return F.relu(User)
+    # def forward_user(self, ufea, vfea, UV_adj, VU_adj):
+    #     User_ho = self.gc1(ufea, VU_adj)
+    #     User_ho = self.gc3(User_ho, UV_adj)
+    #     User = torch.cat((User_ho, ufea), dim=1)
+    #     User = self.user_union(User)
+    #     return F.relu(User)
 
-    def forward_item(self, ufea, vfea, UV_adj, VU_adj):
-        Item_ho = self.gc2(vfea, UV_adj)
-        Item_ho = self.gc4(Item_ho, VU_adj)
-        Item = torch.cat((Item_ho, vfea), dim=1)
-        Item = self.item_union(Item)
-        return F.relu(Item)
+    # def forward_item(self, ufea, vfea, UV_adj, VU_adj):
+    #     Item_ho = self.gc2(vfea, UV_adj)
+    #     Item_ho = self.gc4(Item_ho, VU_adj)
+    #     Item = torch.cat((Item_ho, vfea), dim=1)
+    #     Item = self.item_union(Item)
+    #     return F.relu(Item)
 
-    def forward_user_share(self, ufea, UV_adj, VU_adj):
-        User_ho = self.gc1(ufea, VU_adj)
-        User_ho = self.gc3(User_ho, UV_adj)
-        User = torch.cat((User_ho, ufea), dim=1)
-        User = self.user_union(User)
-        return F.relu(User)
+    # def forward_user_share(self, ufea, UV_adj, VU_adj):
+    #     User_ho = self.gc1(ufea, VU_adj)
+    #     User_ho = self.gc3(User_ho, UV_adj)
+    #     User = torch.cat((User_ho, ufea), dim=1)
+    #     User = self.user_union(User)
+    #     return F.relu(User)
 
 
 class LastLayer(nn.Module):
@@ -230,14 +230,14 @@ class LastLayer(nn.Module):
         item, kld_loss = self.reparameters(Item_ho_mean, Item_ho_logstd)
         return item, kld_loss
 
-    def forward_user_share(self, ufea, UV_adj, VU_adj):
-        User_ho = self.gc1(ufea, VU_adj)
-        User_ho_mean = self.gc3_mean(User_ho, UV_adj)
-        User_ho_logstd = self.gc3_logstd(User_ho, UV_adj)
-        User_ho_mean = torch.cat((User_ho_mean, ufea), dim=1)
-        User_ho_mean = self.user_union_mean(User_ho_mean)
+    # def forward_user_share(self, ufea, UV_adj, VU_adj):
+    #     User_ho = self.gc1(ufea, VU_adj)
+    #     User_ho_mean = self.gc3_mean(User_ho, UV_adj)
+    #     User_ho_logstd = self.gc3_logstd(User_ho, UV_adj)
+    #     User_ho_mean = torch.cat((User_ho_mean, ufea), dim=1)
+    #     User_ho_mean = self.user_union_mean(User_ho_mean)
 
-        User_ho_logstd = torch.cat((User_ho_logstd, ufea), dim=1)
-        User_ho_logstd = self.user_union_logstd(User_ho_logstd)
+    #     User_ho_logstd = torch.cat((User_ho_logstd, ufea), dim=1)
+    #     User_ho_logstd = self.user_union_logstd(User_ho_logstd)
 
-        return User_ho_mean, User_ho_logstd
+    #     return User_ho_mean, User_ho_logstd

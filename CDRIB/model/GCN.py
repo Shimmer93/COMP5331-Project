@@ -17,40 +17,40 @@ class GCN(nn.Module):
         x = self.leakyrelu(self.gc1(x, adj))
         return x
 
-class VGAE(nn.Module):
-    def __init__(self, nfeat, nhid, dropout, alpha):
-        super(GCN, self).__init__()
-        self.gc_mean = GraphConvolution(nfeat, nhid)
-        self.gc_logstd = GraphConvolution(nfeat, nhid)
-        self.dropout = dropout
-        self.leakyrelu = nn.LeakyReLU(alpha)
-        self.nhid = nhid
+# class VGAE(nn.Module):
+#     def __init__(self, nfeat, nhid, dropout, alpha):
+#         super(GCN, self).__init__()
+#         self.gc_mean = GraphConvolution(nfeat, nhid)
+#         self.gc_logstd = GraphConvolution(nfeat, nhid)
+#         self.dropout = dropout
+#         self.leakyrelu = nn.LeakyReLU(alpha)
+#         self.nhid = nhid
 
-    def _kld_gauss(self, mu_1, logsigma_1, mu_2, logsigma_2):
-        """Using std to compute KLD"""
-        # sigma_1 = torch.exp(0.1 + 0.9 * F.softplus(sigma_1))
-        # sigma_2 = torch.exp(0.1 + 0.9 * F.softplus(sigma_2))
-        sigma_1 = 0.1 + 0.9 * F.softplus(torch.exp(logsigma_1))
-        sigma_2 = 0.1 + 0.9 * F.softplus(torch.exp(logsigma_2))
-        q_target = Normal(mu_1, sigma_1)
-        q_context = Normal(mu_2, sigma_2)
-        kl = kl_divergence(q_target, q_context).mean(dim=0).sum()
-        return kl
+#     def _kld_gauss(self, mu_1, logsigma_1, mu_2, logsigma_2):
+#         """Using std to compute KLD"""
+#         # sigma_1 = torch.exp(0.1 + 0.9 * F.softplus(sigma_1))
+#         # sigma_2 = torch.exp(0.1 + 0.9 * F.softplus(sigma_2))
+#         sigma_1 = 0.1 + 0.9 * F.softplus(torch.exp(logsigma_1))
+#         sigma_2 = 0.1 + 0.9 * F.softplus(torch.exp(logsigma_2))
+#         q_target = Normal(mu_1, sigma_1)
+#         q_context = Normal(mu_2, sigma_2)
+#         kl = kl_divergence(q_target, q_context).mean(dim=0).sum()
+#         return kl
 
-    def encode(self, x, adj):
-        mean = self.gc_mean(x, adj)
-        logstd = self.gc_logstd(x, adj)
-        gaussian_noise = torch.randn(x.size(0), self.nhid)
-        if self.gc_mean.training:
-            sampled_z = gaussian_noise * torch.exp(logstd) + mean
-            self.kld_loss = self._kld_gauss(mean, logstd, torch.zeros_like(mean), torch.ones_like(logstd))
-        else :
-            sampled_z = mean
-        return sampled_z
+#     def encode(self, x, adj):
+#         mean = self.gc_mean(x, adj)
+#         logstd = self.gc_logstd(x, adj)
+#         gaussian_noise = torch.randn(x.size(0), self.nhid)
+#         if self.gc_mean.training:
+#             sampled_z = gaussian_noise * torch.exp(logstd) + mean
+#             self.kld_loss = self._kld_gauss(mean, logstd, torch.zeros_like(mean), torch.ones_like(logstd))
+#         else :
+#             sampled_z = mean
+#         return sampled_z
 
-    def forward(self, x, adj):
-        x = self.encode(x, adj)
-        return x
+#     def forward(self, x, adj):
+#         x = self.encode(x, adj)
+#         return x
 
 # def dot_product_decode(Z):
 # 	A_pred = torch.sigmoid(torch.matmul(Z,Z.t()))

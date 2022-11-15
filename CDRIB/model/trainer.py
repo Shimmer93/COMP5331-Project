@@ -132,13 +132,13 @@ class CrossTrainer(Trainer):
         self.source_user, self.source_item, self.target_user, self.target_item = self.model(source_UV, source_VU,
                                                                                             target_UV, target_VU)
 
-    def reconstruct_graph(self, batch, source_UV, source_VU, target_UV, target_VU, source_adj=None, target_adj=None, epoch = 100):
+    def reconstruct_graph(self, batch, source_UV, source_VU, target_UV, target_VU, src_UV_contrast, src_VU_contrast, tgt_UV_contrast, tgt_VU_contrast):
         self.model.train()
         self.optimizer.zero_grad()
 
         source_user, source_pos_item, source_neg_item, target_user, target_pos_item, target_neg_item = self.unpack_batch(batch)
 
-        self.source_user, self.source_item, self.target_user, self.target_item = self.model(source_UV,source_VU, target_UV,target_VU)
+        self.source_user, self.source_item, self.target_user, self.target_item = self.model(source_UV, source_VU, target_UV, target_VU, src_UV_contrast, src_VU_contrast, tgt_UV_contrast, tgt_VU_contrast)
 
         source_user_feature = self.my_index_select(self.source_user, source_user)
         source_item_pos_feature = self.my_index_select(self.source_item, source_pos_item)
@@ -167,7 +167,7 @@ class CrossTrainer(Trainer):
             target_neg_labels = target_neg_labels.cuda()
 
 
-        loss = self.criterion(pos_source_score, source_pos_labels) + self.criterion(neg_source_score, source_neg_labels) + self.criterion(pos_target_score, target_pos_labels) + self.criterion(neg_target_score, target_neg_labels) + self.model.source_GNN.encoder[-1].kld_loss + self.model.target_GNN.encoder[-1].kld_loss + self.model.critic_loss
+        loss = self.criterion(pos_source_score, source_pos_labels) + self.criterion(neg_source_score, source_neg_labels) + self.criterion(pos_target_score, target_pos_labels) + self.criterion(neg_target_score, target_neg_labels) + self.model.source_GNN.encoder[-1].kld_loss + self.model.target_GNN.encoder[-1].kld_loss + self.model.critic_loss + self.model.contrast_loss
 
         loss.backward()
         self.optimizer.step()

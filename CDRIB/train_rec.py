@@ -55,6 +55,7 @@ parser.add_argument('--seed', type=int, default=2040)
 parser.add_argument('--load', dest='load', action='store_true', default=False,  help='Load pretrained model.')
 parser.add_argument('--model_file', type=str, help='Filename of the pretrained model.')
 parser.add_argument('--test_sample_number', type=int, default=999)
+parser.add_argument('--remove_rate', type=float, default=0.1)
 
 def seed_everything(seed=1111):
     random.seed(seed)
@@ -78,6 +79,7 @@ seed_everything(opt["seed"])
 
 # load data adj-matrix; Now sparse tensor ,But not setting in gpu.
 if "CDRIB" in opt["model"]:
+    t = time.time()
     filename  = opt["dataset"]
     source_graph = "../dataset/" + filename + "/train.txt"
     source_G = GraphMaker(opt, source_graph)
@@ -92,7 +94,7 @@ if "CDRIB" in opt["model"]:
     target_UV = target_G.UV
     target_VU = target_G.VU
     target_adj = target_G.adj
-    print("graph loaded!")
+    print(f"graph loaded! {time.time() - t} seconds")
 
     if opt["cuda"]:
         source_UV = source_UV.cuda()
@@ -151,14 +153,14 @@ t_dev_score_history = [0]
 
 current_lr = opt['lr']
 global_step = 0
-global_start_time = time.time()
+# global_start_time = time.time()
 format_str = '{}: step {}/{} (epoch {}/{}), loss = {:.6f} ({:.3f} sec/epoch), lr: {:.6f}'
 max_steps = len(train_batch) * opt['num_epoch']
 
-best_s_hit = -1
-best_s_ndcg = -1
-best_t_hit = -1
-best_t_ndcg = -1
+# best_s_hit = -1
+# best_s_ndcg = -1
+# best_t_hit = -1
+# best_t_ndcg = -1
 
 # start training
 for epoch in range(1, opt['num_epoch'] + 1):
@@ -166,7 +168,7 @@ for epoch in range(1, opt['num_epoch'] + 1):
     start_time = time.time()
     for i, batch in enumerate(train_batch):
         global_step += 1
-        loss = trainer.reconstruct_graph(batch, source_UV, source_VU, target_UV, target_VU, source_adj, target_adj, epoch)
+        loss = trainer.reconstruct_graph(batch, source_UV, source_VU, target_UV, target_VU, train_batch.src_UV_contrast, train_batch.src_VU_contrast, train_batch.tgt_UV_contrast, train_batch.tgt_VU_contrast)
         train_loss += loss
 
     duration = time.time() - start_time
@@ -181,7 +183,7 @@ for epoch in range(1, opt['num_epoch'] + 1):
     print("Evaluating on dev set...")
     trainer.model.eval()
 
-    trainer.evaluate_embedding(source_UV, source_VU, target_UV, target_VU, source_adj, target_adj,epoch)
+    trainer.evaluate_embedding(source_UV, source_VU, target_UV, target_VU, source_adj, target_adj, epoch)
 
     def predict(dataloder, choose):
         MRR = 0.0
@@ -270,6 +272,8 @@ for epoch in range(1, opt['num_epoch'] + 1):
     s_dev_score_history += [s_dev_score]
     t_dev_score_history += [t_dev_score]
     print("")
+
+    train_batch.reset_contrastive()
 
 
 """

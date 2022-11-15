@@ -90,7 +90,7 @@ class CDRIB(nn.Module):
         C = torch.cat((A,B), dim = 1)
         return self.discri(C)
 
-    def forward(self, source_UV, source_VU, target_UV, target_VU):
+    def forward(self, source_UV, source_VU, target_UV, target_VU, src_UV_contrast, src_VU_contrast, tgt_UV_contrast, tgt_VU_contrast):
         source_user = self.source_user_embedding(self.source_user_index)
         target_user = self.target_user_embedding(self.target_user_index)
         source_item = self.source_item_embedding(self.source_item_index)
@@ -98,6 +98,9 @@ class CDRIB(nn.Module):
 
         source_learn_user, source_learn_item = self.source_GNN(source_user, source_item, source_UV, source_VU)
         target_learn_user, target_learn_item = self.target_GNN(target_user, target_item, target_UV, target_VU)
+
+        src_learn_user_contrast, src_learn_item_contrast = self.source_GNN(source_user, source_item, src_UV_contrast, src_VU_contrast)
+        tgt_learn_user_contrast, tgt_learn_item_contrast = self.target_GNN(target_user, target_item, tgt_UV_contrast, tgt_VU_contrast)
 
         if self.source_user_embedding.training:
             per_stable = torch.randperm(self.opt["shared_user"])[:self.opt["user_batch_size"]].cuda(source_learn_user.device)
@@ -123,6 +126,23 @@ class CDRIB(nn.Module):
                 self.critic_loss = self.criterion(pos, pos_label) + self.criterion(neg_1, neg_label) +self.criterion(neg_2, neg_label)
             else :
                 self.critic_loss = self.HingeLoss(pos, neg_1) + self.HingeLoss(pos, neg_2)
+
+            cos1 = F.cosine_similarity(src_learn_user_contrast, source_learn_user, dim=1)
+            cos2 = F.cosine_similarity(src_learn_item_contrast, source_learn_item, dim=1)
+            cos3 = F.cosine_similarity(tgt_learn_user_contrast, target_learn_user, dim=1)
+            cos4 = F.cosine_similarity(tgt_learn_item_contrast, target_learn_item, dim=1)
+            contrast_label1 = torch.ones((src_learn_user_contrast.shape[0],))
+            contrast_label2 = torch.ones((src_learn_item_contrast.shape[0],))
+            contrast_label3 = torch.ones((tgt_learn_user_contrast.shape[0],))
+            contrast_label4 = torch.ones((tgt_learn_item_contrast.shape[0],))
+
+            if self.opt["cuda"]:
+                contrast_label1 = contrast_label1.cuda()
+                contrast_label2 = contrast_label2.cuda()
+                contrast_label3 = contrast_label3.cuda()
+                contrast_label4 = contrast_label4.cuda()
+            
+            self.contrast_loss = F.l1_loss(cos1, contrast_label1) + F.l1_loss(cos2, contrast_label2) + F.l1_loss(cos3, contrast_label3) + F.l1_loss(cos4, contrast_label4)
 
             source_learn_user_concat = torch.cat((target_learn_user[:self.opt["shared_user"]], source_learn_user[self.opt["shared_user"]:]),dim=0)
             target_learn_user_concat = torch.cat((source_learn_user[:self.opt["shared_user"]], target_learn_user[self.opt["shared_user"]:]),dim=0)

@@ -7,6 +7,7 @@ import random
 import torch
 import numpy as np
 import codecs
+from utils.GraphMaker import GraphMaker
 
 class DataLoader(object):
     """
@@ -22,10 +23,17 @@ class DataLoader(object):
         source_valid_data = "../dataset/" + filename + "/valid.txt"
         source_test_data = "../dataset/" + filename + "/test.txt"
 
-        self.source_ma_set, self.source_ma_list, self.source_train_data, self.source_user_set, self.source_item_set = self.read_train_data(source_train_data)
+        self.source_ma_set, _, self.source_train_data, self.source_user_set, self.source_item_set = self.read_train_data(source_train_data)
         if evaluation == -1:
             opt["source_user_num"] = max(self.source_user_set) + 1
             opt["source_item_num"] = max(self.source_item_set) + 1
+            src_graph_file = "../dataset/" + filename + "/train.txt"
+            filename_ = filename.split("_")
+            filename_ = filename_[1] + "_" + filename_[0]
+            tgt_graph_file = "../dataset/" + filename_ + "/train.txt"
+            self.src_graph_maker = GraphMaker(opt, src_graph_file)
+            self.tgt_graph_maker = GraphMaker(opt, tgt_graph_file)
+            self.reset_contrastive()
 
         # ************* target data *****************
         filename = filename.split("_")
@@ -33,7 +41,7 @@ class DataLoader(object):
         target_train_data = "../dataset/" + filename + "/train.txt"
         target_valid_data = "../dataset/" + filename + "/valid.txt"
         target_test_data = "../dataset/" + filename + "/test.txt"
-        self.target_ma_set, self.target_ma_list, self.target_train_data, self.target_user_set, self.target_item_set = self.read_train_data(
+        self.target_ma_set, _, self.target_train_data, self.target_user_set, self.target_item_set = self.read_train_data(
             target_train_data)
         if evaluation == -1:
             opt["target_user_num"] = max(self.target_user_set) + 1
@@ -139,6 +147,7 @@ class DataLoader(object):
         for d in self.test_data:
             processed.append([d[0],d[1]])
         return processed
+
     def preprocess(self):
         """ Preprocess the data and convert to ids. """
         processed = []
@@ -148,11 +157,25 @@ class DataLoader(object):
         for d in self.target_train_data:
             processed.append([-1] + d) # -1 u i
         return processed
+    
+    def reset_contrastive(self):
+        self.src_graph_maker.random_sample()
+        self.tgt_graph_maker.random_sample()
+        self.src_UV_contrast = self.src_graph_maker.UV
+        self.src_VU_contrast = self.src_graph_maker.VU
+        self.tgt_UV_contrast = self.tgt_graph_maker.UV
+        self.tgt_VU_contrast = self.tgt_graph_maker.VU
 
-    def find_pos(self,ma_list, user):
-        rand = random.randint(0, 1000000)
-        rand %= len(ma_list[user])
-        return ma_list[user][rand]
+        if self.opt["cuda"]:
+            self.src_UV_contrast = self.src_UV_contrast.cuda()
+            self.src_VU_contrast = self.src_VU_contrast.cuda()
+            self.tgt_UV_contrast = self.tgt_UV_contrast.cuda()
+            self.tgt_VU_contrast = self.tgt_VU_contrast.cuda()
+
+    # def find_pos(self,ma_list, user):
+    #     rand = random.randint(0, 1000000)
+    #     rand %= len(ma_list[user])
+    #     return ma_list[user][rand]
 
     def find_neg(self, ma_set, user, type):
         n = 5
@@ -173,7 +196,7 @@ class DataLoader(object):
         if key < 0 or key >= len(self.data):
             raise IndexError
         batch = self.data[key]
-        batch_size = len(batch)
+        # batch_size = len(batch)
         if self.eval!=-1:
             batch = list(zip(*batch))
             return (torch.LongTensor(batch[0]), torch.LongTensor(batch[1]))
