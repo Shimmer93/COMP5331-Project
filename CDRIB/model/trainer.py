@@ -128,9 +128,8 @@ class CrossTrainer(Trainer):
         ans = ans.view(tmp)
         return ans
 
-    def evaluate_embedding(self, source_UV=None, source_VU=None, target_UV=None, target_VU=None, source_adj=None, target_adj=None, epoch=None):
-        self.source_user, self.source_item, self.target_user, self.target_item = self.model(source_UV, source_VU,
-                                                                                            target_UV, target_VU)
+    def evaluate_embedding(self, source_UV=None, source_VU=None, target_UV=None, target_VU=None):
+        self.source_user, self.source_item, self.target_user, self.target_item = self.model(source_UV, source_VU, target_UV, target_VU, None, None, None, None)
 
     def reconstruct_graph(self, batch, source_UV, source_VU, target_UV, target_VU, src_UV_contrast, src_VU_contrast, tgt_UV_contrast, tgt_VU_contrast):
         self.model.train()

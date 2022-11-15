@@ -99,8 +99,9 @@ class CDRIB(nn.Module):
         source_learn_user, source_learn_item = self.source_GNN(source_user, source_item, source_UV, source_VU)
         target_learn_user, target_learn_item = self.target_GNN(target_user, target_item, target_UV, target_VU)
 
-        src_learn_user_contrast, src_learn_item_contrast = self.source_GNN(source_user, source_item, src_UV_contrast, src_VU_contrast)
-        tgt_learn_user_contrast, tgt_learn_item_contrast = self.target_GNN(target_user, target_item, tgt_UV_contrast, tgt_VU_contrast)
+        if self.source_user_embedding.training:
+            src_learn_user_contrast, src_learn_item_contrast = self.source_GNN(source_user, source_item, src_UV_contrast, src_VU_contrast)
+            tgt_learn_user_contrast, tgt_learn_item_contrast = self.target_GNN(target_user, target_item, tgt_UV_contrast, tgt_VU_contrast)
 
         if self.source_user_embedding.training:
             per_stable = torch.randperm(self.opt["shared_user"])[:self.opt["user_batch_size"]].cuda(source_learn_user.device)

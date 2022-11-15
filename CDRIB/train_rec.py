@@ -17,6 +17,7 @@ from utils import torch_utils, helper
 import json
 import codecs
 import copy
+from tqdm import tqdm
 # torch.cuda.set_device(12)
 
 parser = argparse.ArgumentParser()
@@ -113,7 +114,7 @@ helper.ensure_dir(model_save_dir, verbose=True)
 # save config
 helper.save_config(opt, model_save_dir + '/config.json', verbose=True)
 file_logger = helper.FileLogger(model_save_dir + '/' + opt['log'],
-                                header="# epoch\ttrain_loss\tdev_loss\tdev_score\tbest_dev_score")
+                                header="epoch\ttrain_loss\tdev_loss\tdev_score\tbest_dev_score\ts_mrr\ts_ndcg_5\ts_ndcg_10\ts_hr_1\ts_hr_5\ts_hr_10\tt_mrr\tt_ndcg_5\tt_ndcg_10\tt_hr_1\tt_hr_5\tt_hr_10")
 
 # print model info
 helper.print_config(opt)
@@ -166,7 +167,7 @@ max_steps = len(train_batch) * opt['num_epoch']
 for epoch in range(1, opt['num_epoch'] + 1):
     train_loss = 0
     start_time = time.time()
-    for i, batch in enumerate(train_batch):
+    for i, batch in tqdm(enumerate(train_batch), total=len(train_batch)):
         global_step += 1
         loss = trainer.reconstruct_graph(batch, source_UV, source_VU, target_UV, target_VU, train_batch.src_UV_contrast, train_batch.src_VU_contrast, train_batch.tgt_UV_contrast, train_batch.tgt_VU_contrast)
         train_loss += loss
@@ -176,14 +177,14 @@ for epoch in range(1, opt['num_epoch'] + 1):
     print(format_str.format(datetime.now(), global_step, max_steps, epoch, \
                                     opt['num_epoch'], train_loss, duration, current_lr))
 
-    if epoch<10 or epoch % 5:
-        continue
+    # if epoch<10 or epoch % 5:
+    #     continue
 
     # eval model
     print("Evaluating on dev set...")
     trainer.model.eval()
 
-    trainer.evaluate_embedding(source_UV, source_VU, target_UV, target_VU, source_adj, target_adj, epoch)
+    trainer.evaluate_embedding(source_UV, source_VU, target_UV, target_VU)
 
     def predict(dataloder, choose):
         MRR = 0.0
@@ -195,7 +196,7 @@ for epoch in range(1, opt['num_epoch'] + 1):
         HT_10 = 0.0
 
         valid_entity = 0.0
-        for i, batch in enumerate(dataloder):
+        for i, batch in tqdm(enumerate(dataloder), total=len(dataloder)):
             if choose:
                 predictions = trainer.source_predict(batch)
             else :
@@ -249,7 +250,7 @@ for epoch in range(1, opt['num_epoch'] + 1):
 
 
     file_logger.log(
-        "{}\t{:.6f}\t{:.4f}\t{:.4f}".format(epoch, train_loss, s_dev_score, max([s_dev_score] + s_dev_score_history)))
+        "{}\t{:.6f}\t{:.4f}\t{:.4f}\t{:.4f}\t{:.4f}\t{:.4f}\t{:.4f}\t{:.4f}\t{:.4f}\t{:.4f}\t{:.4f}\t{:.4f}\t{:.4f}\t{:.4f}\t{:.4f}".format(epoch, train_loss, s_dev_score, max([s_dev_score] + s_dev_score_history), s_mrr, s_ndcg_5, s_ndcg_10, s_hr_1, s_hr_5, s_hr_10, t_mrr, t_ndcg_5, t_ndcg_10, t_hr_1, t_hr_5, t_hr_10))
 
     print(
         "epoch {}: train_loss = {:.6f}, source_hit = {:.4f}, source_ndcg = {:.4f}, target_hit = {:.4f}, target_ndcg = {:.4f}".format(
@@ -260,7 +261,8 @@ for epoch in range(1, opt['num_epoch'] + 1):
     # save
     model_file = model_save_dir + '/checkpoint_epoch_{}.pt'.format(epoch)
     if epoch == 1 or s_dev_score > max(s_dev_score_history):
-        # copyfile(model_file, model_save_dir + '/best_model.pt')
+        trainer.save(model_file)
+        copyfile(model_file, model_save_dir + '/best_model.pt')
         print("new best model saved.")
 
     # lr schedule
