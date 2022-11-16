@@ -56,6 +56,9 @@ parser.add_argument('--load', dest='load', action='store_true', default=False,  
 parser.add_argument('--model_file', type=str, help='Filename of the pretrained model.')
 parser.add_argument('--test_sample_number', type=int, default=999)
 
+parser.add_argument('--source_item_text_file', type=str, default=None)
+parser.add_argument('--target_item_text_file', type=str, default=None)
+
 def seed_everything(seed=1111):
     random.seed(seed)
     torch.manual_seed(seed)
@@ -273,5 +276,5 @@ for epoch in range(1, opt['num_epoch'] + 1):
 
 
 """
-CUDA_VISIBLE_DEVICES=1 python -u train_rec.py --id gv --dataset game_video --model CDRIB --GNN 3 --beta 0.5 
+CUDA_VISIBLE_DEVICES=1 python -u train_rec.py --id gv --dataset game_video --model CDRIB --GNN 3 --beta 0.5
 """

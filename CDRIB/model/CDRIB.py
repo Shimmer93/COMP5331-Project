@@ -6,6 +6,37 @@ from model.VBGE import VBGE
 from torch.distributions.kl import kl_divergence
 from torch.distributions import Normal
 
+import spacy
+import pandas as pd
+import tqdm
+
+nlp = spacy.load("en_core_web_sm")
+
+def get_text_embedding(file):
+    df = pd.read_csv(file, header=None, names=['id', 'text'])
+    vectors = []
+    vdim = None
+    num = 0
+    for i, row in tqdm.tqdm(df.iterrows(), total=len(df)):
+        if isinstance(row.text, str):
+            doc = nlp(row.text)
+            vec = doc.vector
+            vdim = vec.shape
+            vectors.append(torch.tensor(vec))
+        else:
+            vectors.append(None)
+        num += 1
+    dim = vdim[0]
+    embedding = nn.Embedding(num, dim)
+    embedding.weight.data = torch.zeros(num, dim)
+    for i in range(num):
+        if vectors[i] is not None:
+            embedding.weight.data[i] = vectors[i]
+
+    embedding.weight.requires_grad = False
+    return embedding, dim
+
+
 class CDRIB(nn.Module):
     def __init__(self, opt):
         super(CDRIB, self).__init__()
@@ -36,6 +67,14 @@ class CDRIB(nn.Module):
         self.target_user_index = torch.arange(0, self.opt["target_user_num"], 1)
         self.source_item_index = torch.arange(0, self.opt["source_item_num"], 1)
         self.target_item_index = torch.arange(0, self.opt["target_item_num"], 1)
+
+        # self.source_item_text_embedding = nn.Embedding(opt["source_item_num"], opt["feature_dim"])
+        # self.target_item_text_embedding = nn.Embedding(opt["target_item_num"], opt["feature_dim"])
+
+        self.source_item_text_emb, dim = get_text_embedding(opt['source_item_text_file'])
+        self.target_item_text_emb, dim = get_text_embedding(opt['target_item_text_file'])
+        self.text_emb_to_item_embedding = nn.Linear(dim, opt["feature_dim"])
+
 
         if self.opt["cuda"]:
             self.criterion.cuda()
@@ -94,7 +133,11 @@ class CDRIB(nn.Module):
         source_user = self.source_user_embedding(self.source_user_index)
         target_user = self.target_user_embedding(self.target_user_index)
         source_item = self.source_item_embedding(self.source_item_index)
+        source_item = source_item + self.text_emb_to_item_embedding(
+            self.source_item_text_emb(self.source_item_index))
         target_item = self.target_item_embedding(self.target_item_index)
+        target_item = target_item + self.text_emb_to_item_embedding(
+            self.target_item_text_emb(self.target_item_index))
 
         source_learn_user, source_learn_item = self.source_GNN(source_user, source_item, source_UV, source_VU)
         target_learn_user, target_learn_item = self.target_GNN(target_user, target_item, target_UV, target_VU)
