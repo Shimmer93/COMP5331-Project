@@ -58,6 +58,7 @@ parser.add_argument('--test_sample_number', type=int, default=999)
 
 parser.add_argument('--source_item_text_file', type=str, default=None)
 parser.add_argument('--target_item_text_file', type=str, default=None)
+parser.add_argument('--text_method', type=str, default=None)
 
 def seed_everything(seed=1111):
     random.seed(seed)

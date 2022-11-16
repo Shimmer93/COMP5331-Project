@@ -56,6 +56,17 @@ class CDRIB(nn.Module):
         self.dropout = opt["dropout"]
 
         # self.user_embedding = nn.Embedding(opt["source_user_num"], opt["feature_dim"])
+        self.text_method = opt['text_method']
+
+        if self.text_method in ['linear-add', 'cat-linear']:
+            self.source_item_text_emb, dim = get_text_embedding(opt['source_item_text_file'])
+            self.target_item_text_emb, dim = get_text_embedding(opt['target_item_text_file'])
+
+        if self.text_method == 'linear-add':
+            self.text_emb_to_item_embedding = nn.Linear(dim, opt["feature_dim"])
+        elif self.text_method == 'cat-linear':
+            self.text_emb_to_item_embedding = nn.Linear(dim + opt['feature_dim'], opt["feature_dim"])
+
 
         self.source_user_embedding = nn.Embedding(opt["source_user_num"], opt["feature_dim"])
         self.target_user_embedding = nn.Embedding(opt["target_user_num"], opt["feature_dim"])
@@ -71,9 +82,6 @@ class CDRIB(nn.Module):
         # self.source_item_text_embedding = nn.Embedding(opt["source_item_num"], opt["feature_dim"])
         # self.target_item_text_embedding = nn.Embedding(opt["target_item_num"], opt["feature_dim"])
 
-        self.source_item_text_emb, dim = get_text_embedding(opt['source_item_text_file'])
-        self.target_item_text_emb, dim = get_text_embedding(opt['target_item_text_file'])
-        self.text_emb_to_item_embedding = nn.Linear(dim, opt["feature_dim"])
 
 
         if self.opt["cuda"]:
@@ -132,12 +140,28 @@ class CDRIB(nn.Module):
     def forward(self, source_UV, source_VU, target_UV, target_VU):
         source_user = self.source_user_embedding(self.source_user_index)
         target_user = self.target_user_embedding(self.target_user_index)
+
         source_item = self.source_item_embedding(self.source_item_index)
-        source_item = source_item + self.text_emb_to_item_embedding(
-            self.source_item_text_emb(self.source_item_index))
+        if self.text_method == 'linear-add':
+            source_item = source_item + self.text_emb_to_item_embedding(
+                self.source_item_text_emb(self.source_item_index))
+        if self.text_method == 'cat-linear':
+           source_item = self.text_emb_to_item_embedding(
+                torch.cat(
+                    [source_item,
+                     self.source_item_text_emb(self.source_item_index)], dim=-1
+           ))
+
         target_item = self.target_item_embedding(self.target_item_index)
-        target_item = target_item + self.text_emb_to_item_embedding(
-            self.target_item_text_emb(self.target_item_index))
+        if self.text_method == 'linear-add':
+            target_item = target_item + self.text_emb_to_item_embedding(
+                self.target_item_text_emb(self.target_item_index))
+        if self.text_method == 'cat-linear':
+           target_item = self.text_emb_to_item_embedding(
+                torch.cat(
+                    [target_item,
+                     self.target_item_text_emb(self.target_item_index)], dim=-1
+           ))
 
         source_learn_user, source_learn_item = self.source_GNN(source_user, source_item, source_UV, source_VU)
         target_learn_user, target_learn_item = self.target_GNN(target_user, target_item, target_UV, target_VU)
