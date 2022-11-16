@@ -24,6 +24,8 @@ Scipy = 1.5.2
 
 Numpy = 1.19.1
 
+Spacy and python -m spacy download en_core_web_sm
+
 Usage
 ---
 
