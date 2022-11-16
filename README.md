@@ -1,8 +1,10 @@
-CDRIB
+COMP5331 HKUST 2022 Fall
 ===
 
-The source code is for the paper: “Cross-Domain Recommendation to Cold-Start Users
+This is the course project of COMP5331 where we try to modify and improve the existing source codes of the paper “Cross-Domain Recommendation to Cold-Start Users
 via Variational Information Bottleneck” accepted in ICDE 2022 by Jiangxia Cao, Jiawei Sheng, Xin Cong, Tingwen Liu and Bin Wang.
+
+**In this branch (GCL)**, we add graph contrastive learning into the GNN of CDRIB. The trained models and training logs can be found at this [OneDrive](https://hkustconnect-my.sharepoint.com/:f:/g/personal/ssongad_connect_ust_hk/En34Pt0xmwBGoP_4LNWDwUYBrgVW4G2OoVOb5IUBnGjhwg?e=5LH6ve) link.
 
 ```
 @inproceedings{cao2022cdrib,
@@ -32,7 +34,7 @@ To run this project, please make sure that you have the following packages being
 Running example:
 
 ```shell
-CUDA_VISIBLE_DEVICES=1 python -u train_rec.py --id gv --dataset game_video
+CUDA_VISIBLE_DEVICES=0 python -u train_rec.py --id gv --dataset game_video --remove_rate 0.1
 ```
 
 
