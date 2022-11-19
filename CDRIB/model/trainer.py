@@ -134,6 +134,7 @@ class CrossTrainer(Trainer):
 
     def reconstruct_graph(self, batch, source_UV, source_VU, target_UV, target_VU, source_adj=None, target_adj=None, epoch = 100):
         self.model.train()
+        self.model.share_layer.eval()
         self.optimizer.zero_grad()
 
         source_user, source_pos_item, source_neg_item, target_user, target_pos_item, target_neg_item = self.unpack_batch(batch)
@@ -167,8 +168,18 @@ class CrossTrainer(Trainer):
             target_neg_labels = target_neg_labels.cuda()
 
 
-        loss = self.criterion(pos_source_score, source_pos_labels) + self.criterion(neg_source_score, source_neg_labels) + self.criterion(pos_target_score, target_pos_labels) + self.criterion(neg_target_score, target_neg_labels) + self.model.source_GNN.encoder[-1].kld_loss + self.model.target_GNN.encoder[-1].kld_loss + self.model.critic_loss
+        loss = self.criterion(pos_source_score, source_pos_labels) + self.criterion(neg_source_score, source_neg_labels) + self.criterion(pos_target_score, target_pos_labels) + self.criterion(neg_target_score, target_neg_labels) + self.model.source_GNN.encoder[-1].kld_loss + self.model.target_GNN.encoder[-1].kld_loss + self.model.critic_loss # + 0.01 * self.model.overlap_loss
 
+        loss.backward()
+        self.optimizer.step()
+        return loss.item()
+
+    def train_share_layer(self, batch, source_UV, source_VU, target_UV, target_VU, source_adj=None, target_adj=None, epoch = 100):
+        self.model.eval()
+        self.model.share_layer.train()
+        self.optimizer.zero_grad()
+        self.model(source_UV,source_VU, target_UV,target_VU)
+        loss = self.model.overlap_loss
         loss.backward()
         self.optimizer.step()
         return loss.item()

@@ -1,0 +1,5 @@
+saved_models*
+.ipynb_checkpoints*
+generate_dataset*
+rating_dataset*
+__pycache__*

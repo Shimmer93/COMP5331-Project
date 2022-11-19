@@ -89,13 +89,13 @@ if __name__ == '__main__':
     # game video
     # cd movie
     # music instrument
-    source = "cloth"
-    target = "sport"
+    source = "patio"
+    target = "digital"
     f1 = source + "_" + target + "/"
     f2 = target + "_" + source + "/"
 
-    source_common_data = read_dataset(f1 + "common_new_reindex.txt") # same users data
-    target_common_data = read_dataset(f2 + "common_new_reindex.txt")
+    source_common_data = read_dataset("generate_dataset/" + f1 + "common_new_reindex.txt") # same users data
+    target_common_data = read_dataset("generate_dataset/" + f2 + "common_new_reindex.txt")
 
     user_dict = {} # re-index
     source_item = {}
@@ -106,8 +106,8 @@ if __name__ == '__main__':
         print("error!!!!!!")
         exit(0)
 
-    source_total_data = read_dataset(f1 + "new_reindex.txt")
-    target_total_data = read_dataset(f2 + "new_reindex.txt")
+    source_total_data = read_dataset("generate_dataset/" + f1 + "new_reindex.txt")
+    target_total_data = read_dataset("generate_dataset/" + f2 + "new_reindex.txt")
 
     source_user = create_user_dict(user_dict, source_total_data) # re-index
     target_user = create_user_dict(user_dict, target_total_data)
@@ -120,6 +120,6 @@ if __name__ == '__main__':
     print(len(source_item))
     print(len(target_item))
 
-    generate_train_valid_test(f1, source_total_data, source_common_data, source_user, source_item, 0)
-    generate_train_valid_test(f2, target_total_data, target_common_data, target_user, target_item, 1)
+    generate_train_valid_test("generate_dataset/" + f1, source_total_data, source_common_data, source_user, source_item, 0)
+    generate_train_valid_test("generate_dataset/" + f2, target_total_data, target_common_data, target_user, target_item, 1)
 

@@ -111,7 +111,7 @@ helper.ensure_dir(model_save_dir, verbose=True)
 # save config
 helper.save_config(opt, model_save_dir + '/config.json', verbose=True)
 file_logger = helper.FileLogger(model_save_dir + '/' + opt['log'],
-                                header="# epoch\ttrain_loss\tdev_loss\tdev_score\tbest_dev_score")
+                                header="# epoch\ttrain_loss0\tdev_loss\tdev_score\tbest_dev_score")
 
 # print model info
 helper.print_config(opt)
@@ -152,7 +152,7 @@ t_dev_score_history = [0]
 current_lr = opt['lr']
 global_step = 0
 global_start_time = time.time()
-format_str = '{}: step {}/{} (epoch {}/{}), loss = {:.6f} ({:.3f} sec/epoch), lr: {:.6f}'
+format_str = '{}: step {}/{} (epoch {}/{}), loss = {:.6f} {:.6f} {:.6f} ({:.3f} sec/epoch), lr: {:.6f}'
 max_steps = len(train_batch) * opt['num_epoch']
 
 best_s_hit = -1
@@ -162,23 +162,39 @@ best_t_ndcg = -1
 
 # start training
 for epoch in range(1, opt['num_epoch'] + 1):
-    train_loss = 0
+    train_loss0 = 0
+    overlap_loss = 0
+    train_loss1 = 0
     start_time = time.time()
+
+    trainer.model.stage = 0
     for i, batch in enumerate(train_batch):
         global_step += 1
         loss = trainer.reconstruct_graph(batch, source_UV, source_VU, target_UV, target_VU, source_adj, target_adj, epoch)
-        train_loss += loss
+        train_loss0 += loss
+
+    for i, batch in enumerate(train_batch):
+        loss = trainer.train_share_layer(batch, source_UV, source_VU, target_UV, target_VU, source_adj, target_adj, epoch)
+        overlap_loss += loss
+
+    trainer.model.stage = 1
+    for i, batch in enumerate(train_batch):
+        loss = trainer.reconstruct_graph(batch, source_UV, source_VU, target_UV, target_VU, source_adj, target_adj, epoch)
+        train_loss1 += loss
 
     duration = time.time() - start_time
-    train_loss = train_loss/len(train_batch)
+    train_loss0 = train_loss0/len(train_batch)
+    overlap_loss = overlap_loss/len(train_batch)
+    train_loss1 = train_loss1/len(train_batch)
     print(format_str.format(datetime.now(), global_step, max_steps, epoch, \
-                                    opt['num_epoch'], train_loss, duration, current_lr))
+                                    opt['num_epoch'], train_loss0, overlap_loss, train_loss1, duration, current_lr))
 
     if epoch<10 or epoch % 5:
         continue
 
     # eval model
     print("Evaluating on dev set...")
+    trainer.model.stage = 1
     trainer.model.eval()
 
     trainer.evaluate_embedding(source_UV, source_VU, target_UV, target_VU, source_adj, target_adj,epoch)
@@ -235,30 +251,31 @@ for epoch in range(1, opt['num_epoch'] + 1):
     s_dev_score = s_mrr
     t_dev_score = t_mrr
 
+    s_mrr, s_ndcg_5, s_ndcg_10, s_hr_1, s_hr_5, s_hr_10 = predict(source_test_batch, 1)
+    print("\nsource: \t{:.6f}\t{:.4f}\t{:.4f}\t{:.6f}\t{:.4f}\t{:.4f}".format(s_mrr, s_ndcg_5, s_ndcg_10, s_hr_1, s_hr_5, s_hr_10))
     if s_dev_score > max(s_dev_score_history):
         print("source best!")
-        s_mrr, s_ndcg_5, s_ndcg_10, s_hr_1, s_hr_5, s_hr_10 = predict(source_test_batch, 1)
-        print("\nsource: \t{:.6f}\t{:.4f}\t{:.4f}\t{:.6f}\t{:.4f}\t{:.4f}".format(s_mrr, s_ndcg_5, s_ndcg_10, s_hr_1, s_hr_5, s_hr_10))
 
+    t_mrr, t_ndcg_5, t_ndcg_10, t_hr_1, t_hr_5, t_hr_10 = predict(target_test_batch, 0)
+    print("target: \t{:.6f}\t{:.4f}\t{:.4f}\t{:.6f}\t{:.4f}\t{:.4f}".format(t_mrr, t_ndcg_5, t_ndcg_10, t_hr_1, t_hr_5, t_hr_10))
     if t_dev_score > max(t_dev_score_history):
         print("target best!")
-        t_mrr, t_ndcg_5, t_ndcg_10, t_hr_1, t_hr_5, t_hr_10 = predict(target_test_batch, 0)
-        print("target: \t{:.6f}\t{:.4f}\t{:.4f}\t{:.6f}\t{:.4f}\t{:.4f}".format(t_mrr, t_ndcg_5, t_ndcg_10, t_hr_1, t_hr_5, t_hr_10))
 
 
     file_logger.log(
-        "{}\t{:.6f}\t{:.4f}\t{:.4f}".format(epoch, train_loss, s_dev_score, max([s_dev_score] + s_dev_score_history)))
+        "{}\t{:.6f}\t{:.6f}\t{:.6f}\t{:.4f}\t{:.4f} \t{:.6f}\t{:.4f}\t{:.4f}\t{:.6f}\t{:.4f}\t{:.4f} \t{:.6f}\t{:.4f}\t{:.4f}\t{:.6f}\t{:.4f}\t{:.4f}".format(epoch, train_loss0, overlap_loss, train_loss1, s_dev_score, max([s_dev_score] + s_dev_score_history), s_mrr, s_ndcg_5, s_ndcg_10, s_hr_1, s_hr_5, s_hr_10, t_mrr, t_ndcg_5, t_ndcg_10, t_hr_1, t_hr_5, t_hr_10))
 
     print(
-        "epoch {}: train_loss = {:.6f}, source_hit = {:.4f}, source_ndcg = {:.4f}, target_hit = {:.4f}, target_ndcg = {:.4f}".format(
+        "epoch {}: train_loss0 = {:.6f}, overlap_loss = {:.6f}, train_loss1 = {:.6f}, source_hit = {:.4f}, source_ndcg = {:.4f}, target_hit = {:.4f}, target_ndcg = {:.4f}".format(
             epoch, \
-            train_loss, s_hr_10, s_ndcg_10, t_hr_10, t_ndcg_10))
+            train_loss0, overlap_loss, train_loss1, s_hr_10, s_ndcg_10, t_hr_10, t_ndcg_10))
 
 
     # save
     model_file = model_save_dir + '/checkpoint_epoch_{}.pt'.format(epoch)
+    torch.save(trainer.model.state_dict(), model_file)
     if epoch == 1 or s_dev_score > max(s_dev_score_history):
-        # copyfile(model_file, model_save_dir + '/best_model.pt')
+        copyfile(model_file, model_save_dir + '/best_model.pt')
         print("new best model saved.")
 
     # lr schedule

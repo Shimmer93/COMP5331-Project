@@ -121,8 +121,8 @@ def get_total_user(data1, data2):
 
 # datapath = './Amazon/'
 datapath = './rating_dataset/'
-data_name_s = 'music'
-data_name_t = 'instrument'
+data_name_s = 'patio'
+data_name_t = 'digital'
 save_path = 'generate_dataset/'
 
 save_path_s = save_path + data_name_s + '_' + data_name_t + '/'
@@ -134,7 +134,9 @@ if not os.path.exists(save_path_t):
 data_dic = {'sport': 'ratings_Sports_and_Outdoors', 'electronic': 'ratings_Electronics',
             'cloth': 'ratings_Clothing_Shoes_and_Jewelry', 'cell': 'ratings_Cell_Phones_and_Accessories',
             'instrument': 'ratings_Musical_Instruments', 'game': 'ratings_Toys_and_Games', 'video': 'ratings_Video_Games',
-            'book':'ratings_Books', 'movie':'ratings_Movies_and_TV', 'cd': 'ratings_CDs_and_Vinyl', 'music':'ratings_Digital_Music'}
+            'book':'ratings_Books', 'movie':'ratings_Movies_and_TV', 'cd': 'ratings_CDs_and_Vinyl', 'music':'ratings_Digital_Music',
+            'instant': 'ratings_Amazon_Instant_Video', 'baby': 'ratings_Baby', 'digital': 'ratings_Digital_Music',
+            'patio': 'ratings_Patio_Lawn_and_Garden', 'food': 'ratings_Grocery_and_Gourmet_Food',}
 
 
 filepath1 = datapath + data_dic[data_name_s] + '.csv'
