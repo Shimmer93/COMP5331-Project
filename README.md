@@ -1,4 +1,4 @@
-CDRIB
+CDRIB - BA
 ===
 
 Bilinear Aggregation version, modified VBGE.py to MVBGE.py and some bug fix.
@@ -31,7 +31,7 @@ Numpy = 1.19.1
 Usage
 ---
 
-To run this project, please make sure that you have the following packages being downloaded. Our experiments are conducted on a PC with an Intel Xeon E5 2.1GHz CPU, 256 RAM and a Tesla V100 32GB GPU. 
+To run this project, please make sure that you have the following packages being downloaded. Our experiments are conducted on a PC with an Intel(R) Core(TM) i9-9900X CPU @ 3.50GHz, 62 RAM and 2 NVIDIA GeForce RTX 2080 Ti. 
 
 Running example:
 
