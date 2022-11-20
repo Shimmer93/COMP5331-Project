@@ -2,6 +2,7 @@ CDRIB
 ===
 
 The source code is for the term project in course 5331.
+
 This branch is about approach of Meta Information Encoding, mainly contributed by CHAN Tsz Ho, WANG Zihao(in alphabet).
 
 
