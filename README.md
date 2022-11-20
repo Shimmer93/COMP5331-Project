@@ -1,8 +1,9 @@
-CDRIB
+HKUST COMP5331 2022 Fall Course Project (Group 2)
 ===
 
-Baseline code from the paper: “Cross-Domain Recommendation to Cold-Start Users
-via Variational Information Bottleneck” accepted in ICDE 2022 by Jiangxia Cao, Jiawei Sheng, Xin Cong, Tingwen Liu and Bin Wang.
+The main branch contains baseline codes from the paper: “Cross-Domain Recommendation to Cold-Start Users via Variational Information Bottleneck”.
+
+In each of the other 4 branch are the codes for our proposed methods (BA, GCL, DML and MIE) and please refer to the README there for usage.
 
 ```
 @inproceedings{cao2022cdrib,
