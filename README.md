@@ -5,6 +5,7 @@ The source code is for the term project in course 5331.
 
 This branch is about approach of Meta Information Encoding, mainly contributed by CHAN Tsz Ho, WANG Zihao(in alphabet).
 
+In this branch, we mainly add a embedding after the item index embedding in the model file. To acomplish the embedding, we also modified the data preprocessing files.
 
 
 Requirements
