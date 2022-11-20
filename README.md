@@ -1,8 +1,12 @@
 CDRIB
 ===
 
-The source code is for the paper: “Cross-Domain Recommendation to Cold-Start Users
+Bilinear Aggregation version, modified VBGE.py to MVBGE.py and some bug fix.
+
+Modified from the source code for for the paper: “Cross-Domain Recommendation to Cold-Start Users
 via Variational Information Bottleneck” accepted in ICDE 2022 by Jiangxia Cao, Jiawei Sheng, Xin Cong, Tingwen Liu and Bin Wang.
+
+For simplicity, we just replace the file for VBGE, but didn't rename CDRIB files, so the executing procedure is the same as the original work.
 
 ```
 @inproceedings{cao2022cdrib,
