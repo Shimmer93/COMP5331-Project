@@ -1,7 +1,9 @@
-CDRIB
+CDRIB-DML
 ===
 
-The source code is for the paper: “Cross-Domain Recommendation to Cold-Start Users
+Add dual metric learning (DML) to CDRIB. The DML method comes from the paper "Dual Metric Learning for Effective and Efficient Cross-Domain Recommendations" by Pan Li and Alexander Tuzhilin. [paper](https://arxiv.org/pdf/2104.08490.pdf)
+
+Modified from the source code for the paper: “Cross-Domain Recommendation to Cold-Start Users
 via Variational Information Bottleneck” accepted in ICDE 2022 by Jiangxia Cao, Jiawei Sheng, Xin Cong, Tingwen Liu and Bin Wang.
 
 ```
@@ -27,7 +29,7 @@ Numpy = 1.19.1
 Usage
 ---
 
-To run this project, please make sure that you have the following packages being downloaded. Our experiments are conducted on a PC with an Intel Xeon E5 2.1GHz CPU, 256 RAM and a Tesla V100 32GB GPU. 
+To run this project, please make sure that you have the following packages being downloaded. 
 
 Running example:
 
