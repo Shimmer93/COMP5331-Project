@@ -1,17 +1,10 @@
 CDRIB
 ===
 
-The source code is for the paper: “Cross-Domain Recommendation to Cold-Start Users
-via Variational Information Bottleneck” accepted in ICDE 2022 by Jiangxia Cao, Jiawei Sheng, Xin Cong, Tingwen Liu and Bin Wang.
+The source code is for the term project in course 5331.
+This branch is about approach of Meta Information Encoding, mainly contributed by CHAN Tsz Ho, WANG Zihao(in alphabet).
 
-```
-@inproceedings{cao2022cdrib,
-  title={Cross-Domain Recommendation to Cold-Start Users via Variational Information Bottleneck},
-  author={Cao, Jiangxia and Sheng, Jiawei and Cong, Xin and Liu, Tingwen and Wang, Bin},
-  booktitle={IEEE International Conference on Data Engineering (ICDE)},
-  year={2022}
-}
-```
+
 
 Requirements
 ---
@@ -29,12 +22,12 @@ Spacy and python -m spacy download en_core_web_sm
 Usage
 ---
 
-To run this project, please make sure that you have the following packages being downloaded. Our experiments are conducted on a PC with an Intel Xeon E5 2.1GHz CPU, 256 RAM and a Tesla V100 32GB GPU. 
+To run this project, please make sure that you have the above packages being downloaded. Our experiments are conducted on a PC with an Intel Xeon E5 2.1GHz CPU, 256 RAM and a 3090 24GB GPU. 
 
 Running example:
 
 ```shell
-CUDA_VISIBLE_DEVICES=1 python -u train_rec.py --id gv --dataset game_video
+CUDA_VISIBLE_DEVICES=1 python -u train_rec.py --id gv --dataset game_video --model CDRIB --GNN 3 --beta 0.5 --source_item_text_file ../game_video_index2Title.csv --target_item_text_file ../video_game_index2Title.csv
 ```
 
 
